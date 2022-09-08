@@ -1,6 +1,8 @@
-use bollard::Docker;
+use bollard::{image::CreateImageOptions, Docker};
+use futures;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
+use std::default::Default;
 
 const DOCKER_REPOSITORY: &str = "amazon/dynamodb-local";
 
@@ -18,9 +20,29 @@ pub fn deploy(config: Value) {
     println!("PLACEHOLDER FUNCTION:\npole::deploy: config: {}", config)
 }
 
-pub fn pull_image(connection: &Docker, repository: Option<&str>, tag: Option<&str>) {
+pub async fn pull_image(docker: &Docker, repository: Option<&str>, tag: Option<&str>) {
     let tag = tag.unwrap_or("latest");
     let repository = repository.unwrap_or(DOCKER_REPOSITORY);
+
+    println!("Pulling Image: {}:{}", repository, tag);
+    for item in futures::executor::block_on_stream(docker.create_image(
+        Some(CreateImageOptions {
+            from_image: repository,
+            tag: tag,
+            ..Default::default()
+        }),
+        None,
+        None,
+    )) {
+        match item {
+            Ok(_) => Ok(()),
+            Err(err) => {
+                println!("Unable to download image {}:{}: {}", repository, tag, err);
+                Err(())
+            }
+        }
+        .unwrap();
+    }
 }
 
 pub fn deploy_container() {}
