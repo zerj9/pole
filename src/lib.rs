@@ -16,7 +16,8 @@ pub fn verify(config: Value) {
     println!("pole::verify: config: {:?}", config)
 }
 
-pub fn deploy(config: Value) {
+pub async fn deploy(docker: &Docker, repository: Option<&str>, tag: Option<&str>, config: Value) {
+    pull_image(docker, repository, tag).await;
     println!("PLACEHOLDER FUNCTION:\npole::deploy: config: {}", config)
 }
 
